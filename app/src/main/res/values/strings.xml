@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Checkers</string>
+    <string name="restart">Game Restarted</string>
+    <string name="possibleMoves">You have these possible move(s): %1$s</string>
+    <string name="invalCoor">Invalid Coordinates</string>
+    <string name="winMsg">%1$s wins!</string>
+    <string name="blackPieceCount">Black Pieces: %1$d</string>
+    <string name="whitePieceCount">White Pieces: %1$d</string>
+</resources>
