@@ -1,9 +1,11 @@
 package com.josh.checkers;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class Checkers {
+public class CheckerBoard {
     // board elements
     private String[][] board = new String[8][8];
     // count of pieces remaining on the board for each side
@@ -175,35 +177,36 @@ public class Checkers {
     }
 
     public String printBoard() {
-//        System.out.println("     0     1     2     3     4     5     6     7   ");
-//        System.out.println("  _________________________________________________");
+        System.out.println("     0     1     2     3     4     5     6     7   ");
+        System.out.println("  _________________________________________________");
         this.boardVisual = "     0     1     2     3     4     5     6     7   \n  _________________________________________________\n";
         int rowNum = 0;
         for (String[] row : board) {
-//            System.out.println("  |     |     |     |     |     |     |     |     |");
+            System.out.println("  |     |     |     |     |     |     |     |     |");
             boardVisual += "  |     |     |     |     |     |     |     |     |\n";
-//            System.out.print(rowNum + " ");
+            System.out.print(rowNum + " ");
             boardVisual += rowNum + " ";
             for (String s : row) {
                 if (s == null) {
-//                    System.out.print("|     ");
+                    System.out.print("|     ");
                     boardVisual += "|     ";
                 } else {
-//                    System.out.print("|" + s + "");
+                    System.out.print("|" + s + "");
                     boardVisual += "|" + s;
                 }
             }
-//            System.out.print("|");
+            System.out.print("|");
             boardVisual += "|";
-//            if (rowNum == 3) {
-//                System.out.print(" BLACK Pieces: " + blackPieceCount);
-//            } else if (rowNum == 4) {
-//                System.out.print(" WHITE Pieces: " + whitePieceCount);
-//            }
-//            System.out.println("\n  |_____|_____|_____|_____|_____|_____|_____|_____|");
+            if (rowNum == 3) {
+                System.out.print(" BLACK Pieces: " + blackPieceCount);
+            } else if (rowNum == 4) {
+                System.out.print(" WHITE Pieces: " + whitePieceCount);
+            }
+            System.out.println("\n  |_____|_____|_____|_____|_____|_____|_____|_____|");
             boardVisual += "\n  |_____|_____|_____|_____|_____|_____|_____|_____|\n";
             rowNum++;
         }
+        Log.d("board", "printed");
         return boardVisual;
     }
 

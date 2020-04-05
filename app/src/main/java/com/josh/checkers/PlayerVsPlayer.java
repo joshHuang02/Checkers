@@ -10,12 +10,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import java.util.Arrays;
-import java.util.Scanner;
-import java.util.ArrayList;
-
 public class PlayerVsPlayer extends AppCompatActivity {
-    Checkers checkers = new Checkers();
+    CheckerBoard checkerBoard = new CheckerBoard();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,18 +21,19 @@ public class PlayerVsPlayer extends AppCompatActivity {
         Button moveBtn = (Button) findViewById(R.id.moveBtn);
         final Button returnBtn = (Button) findViewById(R.id.returnBtn);
 
-        checkers.newBoard();
+        checkerBoard.newBoard();
         printVisual();
 
         moveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                System.out.println("printed");
                 TextView notificationTextView = (TextView) findViewById(R.id.notificationTextView);
                 notificationTextView.setText("");
                 playGame();
                 EditText coordinateEditText = (EditText) findViewById(R.id.coordinateEditText);
                 coordinateEditText.getText().clear();
-                checkers.errMsg = "";
+                checkerBoard.errMsg = "";
             }
         });
 
@@ -54,7 +51,7 @@ public class PlayerVsPlayer extends AppCompatActivity {
 
         // while none of the scores are 0, run the game, prints the board at the the end
         // of each loop
-        if (Math.min(checkers.getBlackPiecesCount(), checkers.getWhitePieceCount()) != 0) {
+        if (Math.min(checkerBoard.getBlackPiecesCount(), checkerBoard.getWhitePieceCount()) != 0) {
             String move = coordinates.getText().toString();
             // switch to see what the input string is
             switch (move) {
@@ -62,13 +59,13 @@ public class PlayerVsPlayer extends AppCompatActivity {
                 case "restart":
 //                    System.out.println("Game restarted. ");
                     notificationTextView.setText(getString(R.string.restart));
-                    checkers.newBoard();
+                    checkerBoard.newBoard();
                     break;
                 // type "help" to see all your possible moves
                 case "help":
 //                    System.out.print("You have these possible move(s): ");
 //                    System.out.println(Arrays.toString(checkers.allPossibleMoves().toArray()));\
-                    String possibleMovesMsg = getString(R.string.possibleMoves, checkers.allPossibleMoves().toString());
+                    String possibleMovesMsg = getString(R.string.possibleMoves, checkerBoard.allPossibleMoves().toString());
                     notificationTextView.setText(possibleMovesMsg);
                     break;
                 // default is when you give a coordinate
@@ -80,37 +77,37 @@ public class PlayerVsPlayer extends AppCompatActivity {
                     } else {
                         // call move piece. If move piece returns true, then switch turns
                         // Note: will not switch turns when another jump is possible
-                        if (checkers.movePiece((int) move.charAt(0) - 48, (int) move.charAt(1) - 48, (int) move.charAt(2) - 48,
+                        if (checkerBoard.movePiece((int) move.charAt(0) - 48, (int) move.charAt(1) - 48, (int) move.charAt(2) - 48,
                                 (int) move.charAt(3) - 48)) {
-                            checkers.setBlackTurn(!checkers.getBlackTurn());
+                            checkerBoard.setBlackTurn(!checkerBoard.getBlackTurn());
                         }
-                        if (checkers.errMsg.length() != 0)
-                            notificationTextView.setText(checkers.errMsg);
+                        if (checkerBoard.errMsg.length() != 0)
+                            notificationTextView.setText(checkerBoard.errMsg);
                         // when a piece reach the other side of the board, make it a king
                         for (int i = 0; i < 8; i++) {
-                            if ("WHITE".equals(checkers.getBoard()[0][i]))
-                                checkers.getBoard()[0][i] = "WKING";
-                            if ("BLACK".equals(checkers.getBoard()[7][i]))
-                                checkers.getBoard()[7][i] = "BKING";
+                            if ("WHITE".equals(checkerBoard.getBoard()[0][i]))
+                                checkerBoard.getBoard()[0][i] = "WKING";
+                            if ("BLACK".equals(checkerBoard.getBoard()[7][i]))
+                                checkerBoard.getBoard()[7][i] = "BKING";
                         }
                     }
                     break;
             }
-            if (checkers.getBlackTurn()) {
+            if (checkerBoard.getBlackTurn()) {
 //                System.out.print("BLACK Turn: ");
                 coordinates.setHint("BLACK Turn");
             } else {
 //                System.out.print("WHITE Turn: ");
                 coordinates.setHint("WHITE Turn");
             }
-            Log.d("boolean", checkers.getBlackTurn() + "");
+            Log.d("boolean", checkerBoard.getBlackTurn() + "");
             printVisual();
         }
         // when a side runs out of pieces, the other side wins, also ends the program
-        if (checkers.getBlackPiecesCount() == 0) {
+        if (checkerBoard.getBlackPiecesCount() == 0) {
 //            System.out.println("WHITE wins!
             notificationTextView.setText(getString(R.string.winMsg, "WHITE"));
-        } else if (checkers.getWhitePieceCount() == 0) {
+        } else if (checkerBoard.getWhitePieceCount() == 0) {
 //            System.out.println("BLACK wins!");
             notificationTextView.setText(getString(R.string.winMsg, "BLACK"));
         }
@@ -121,9 +118,9 @@ public class PlayerVsPlayer extends AppCompatActivity {
         TextView whitePiecesTextView = (TextView) findViewById(R.id.whitePiecesTextView);
         TextView boardTextView = (TextView) findViewById(R.id.boardTextView);
 
-        blackPiecesTextView.setText(getString(R.string.blackPieceCount, checkers.getBlackPiecesCount()));
-        whitePiecesTextView.setText(getString(R.string.whitePieceCount, checkers.getWhitePieceCount()));
-        boardTextView.setText(checkers.printBoard());
+        blackPiecesTextView.setText(getString(R.string.blackPieceCount, checkerBoard.getBlackPiecesCount()));
+        whitePiecesTextView.setText(getString(R.string.whitePieceCount, checkerBoard.getWhitePieceCount()));
+        boardTextView.setText(checkerBoard.printBoard());
     }
 
     public void returnHome() {

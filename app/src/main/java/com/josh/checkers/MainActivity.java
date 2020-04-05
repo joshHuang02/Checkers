@@ -33,6 +33,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        pvbBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openPVB();
+            }
+        });
+
     }
 
     public void openRules() {
@@ -46,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openPVB() {
-        Intent intent = new Intent(this, Rules.class);
+        Intent intent = new Intent(this, PlayerVsBot.class);
         startActivity(intent);
     }
 
