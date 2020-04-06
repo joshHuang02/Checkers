@@ -18,7 +18,7 @@ public class CheckerBoard {
     // error message in case there is one, wasn't feeling getters and setters so its public
     public String errMsg = "";
 
-    public boolean movePiece(int x0, int y0, int xf, int yf)  {
+    public boolean movePiece(int x0, int y0, int xf, int yf) {
         // checks if the initial square is correct color based on what turn it is
         if (!(("BLACK".equals(board[x0][y0]) && blackTurn) || ("BKING".equals(board[x0][y0]) && blackTurn)
                 || ("WHITE".equals(board[x0][y0]) && !blackTurn) || ("WKING".equals(board[x0][y0]) && !blackTurn))) {
@@ -73,8 +73,9 @@ public class CheckerBoard {
             for (int j = 0; j < 8; j++) {
                 ArrayList<String> availableJumps = availableJumps(i, j);
                 if (board[i][j] != null && availableJumps.size() != 0) {
-                    for (String coordiate : availableJumps) {
-                        possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordiate);
+                    for (String coordinate : availableJumps) {
+//                        possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordiate);
+                        possibleMoves.add(coordinate);
                     }
                 }
             }
@@ -85,8 +86,9 @@ public class CheckerBoard {
                 for (int j = 0; j < 8; j++) {
                     ArrayList<String> availableMoves = availableSteps(i, j);
                     if (board[i][j] != null && availableMoves.size() != 0) {
-                        for (String coordiate : availableMoves) {
-                            possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordiate);
+                        for (String coordinate : availableMoves) {
+//                            possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordiate);
+                            possibleMoves.add(coordinate);
                         }
                     }
                 }
