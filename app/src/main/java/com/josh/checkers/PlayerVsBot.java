@@ -1,18 +1,24 @@
 package com.josh.checkers;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import java.util.*;
 
-public class PlayerVsBot extends AppCompatActivity implements View.OnClickListener {
+public class PlayerVsBot extends AppCompatActivity {
     private int number = 0;
     private boolean wantHelp = false;
+    private String initialCoordinates = null;
     CheckerBoard checkerBoard = new CheckerBoard();
 
     @Override
@@ -20,28 +26,85 @@ public class PlayerVsBot extends AppCompatActivity implements View.OnClickListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player_vs_bot);
 
+        // none of the buttons are defined or have onClick because I set their 'onClick' property
         Switch help = (Switch) findViewById(R.id.helpSwitch);
 
+        // makes new board and display it
         checkerBoard.newBoard();
         printBoard();
 
+        // help switch
         help.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 wantHelp = isChecked;
                 printBoard();
             }
         });
+    }
 
-        // sends all click listener to onClick;
-//        piece.setOnClickListener(this);
+    public void move(View v) {
+        TextView notificationTextView = (TextView) findViewById(R.id.notificationTextView);
+        TextView turnTextView = (TextView) findViewById(R.id.turnTextView);
+        ImageButton piece = (ImageButton) findViewById(v.getId());
 
+        String tag = piece.getTag().toString();
 
+        // when you click on a piece, moveOwnPiece checks if the piece you clicked is on the correct turn
+        // ex moveOwnPiece if you click on a white piece on black turn
+        boolean moveOwnPiece;
+        boolean squareIsNull;
+        if (checkerBoard.getBoard()[tag.charAt(0) - '0'][tag.charAt(1) - '0'] != null) {
+            moveOwnPiece = ('B' == checkerBoard.getBoard()[tag.charAt(0) - '0'][tag.charAt(1) - '0'].charAt(0) && checkerBoard.getBlackTurn())
+                    || ('W' == checkerBoard.getBoard()[tag.charAt(0) - '0'][tag.charAt(1) - '0'].charAt(0) && !checkerBoard.getBlackTurn());
+            squareIsNull = false;
+        } else {
+            moveOwnPiece = false;
+            squareIsNull = true;
+        }
+
+        if (initialCoordinates == null) {
+            // for some reason putting this if statement as an "&&" in the above statement breaks the app
+            if (moveOwnPiece) initialCoordinates = tag;
+        } else if (moveOwnPiece) {
+            initialCoordinates = tag;
+        } else if (squareIsNull){ // at this stage piece definitely moves
+            String coordinates = initialCoordinates + tag;
+            if (checkerBoard.movePiece(coordinates.charAt(0) - '0', coordinates.charAt(1) - '0', coordinates.charAt(2) - '0', coordinates.charAt(3) - '0')) {
+                checkerBoard.setBlackTurn(!checkerBoard.getBlackTurn());
+            }
+            initialCoordinates = null;
+        }
+
+        // tells player whose turn it is
+        if (checkerBoard.getBlackTurn()) {
+            turnTextView.setText("Black Turn");
+        } else {
+            turnTextView.setText("White Turn");
+        }
+
+        // win message
+        if (checkerBoard.getBlackPiecesCount() == 0) {
+            notificationTextView.setText(getString(R.string.winMsg, "WHITE"));
+        } else if (checkerBoard.getWhitePieceCount() == 0){
+            notificationTextView.setText(getString(R.string.winMsg, "BLACK"));
+        } else {
+            // set error or help text on the screen
+            notificationTextView.setText(checkerBoard.errMsg);
+        }
+
+        printBoard();
     }
 
     public void printBoard() {
+        TextView blackPiecesTextView = (TextView) findViewById(R.id.blackPiecesTextView);
+        TextView whitePiecesTextView = (TextView) findViewById(R.id.whitePiecesTextView);
+
+        blackPiecesTextView.setText(getString(R.string.blackPieceCount, checkerBoard.getBlackPiecesCount()));
+        whitePiecesTextView.setText(getString(R.string.whitePieceCount, checkerBoard.getWhitePieceCount()));
+
         String[][] board = checkerBoard.getBoard();
         ImageButton[] allPieces = getAllPieces();
-        ArrayList<String> allPossibleFinalCoordinates = checkerBoard.allPossibleMoves();
+        ArrayList<String> possibleFinalCoordinates = checkerBoard.possibleFinalCoordinates();
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 for (ImageButton btn : allPieces) {
@@ -68,11 +131,14 @@ public class PlayerVsBot extends AppCompatActivity implements View.OnClickListen
                             btn.setImageDrawable(null);
                             btn.getBackground().setAlpha(0);
                         }
+                        if (tag.equals(initialCoordinates)) {
+                            btn.getBackground().setAlpha(255);
+                        }
 
                         if (wantHelp) {
-                            if (allPossibleFinalCoordinates.contains(coordinate)) {
+                            if (possibleFinalCoordinates.contains(coordinate)) {
                                 btn.setImageResource(R.drawable.possible_move);
-                                btn.getBackground().setAlpha(100);
+                                btn.getBackground().setAlpha(255);
                             }
                         }
                     }
@@ -81,11 +147,7 @@ public class PlayerVsBot extends AppCompatActivity implements View.OnClickListen
         }
     }
 
-    @Override
-    public void onClick(View v) {
-        printBoard();
-    }
-
+    // returns an array of all piece ImageButtons
     private ImageButton[] getAllPieces() {
         ImageButton allPieces[] = new ImageButton[32];
         allPieces[0] = (ImageButton) findViewById(R.id.piece);
@@ -123,32 +185,8 @@ public class PlayerVsBot extends AppCompatActivity implements View.OnClickListen
         return allPieces;
     }
 
-    public void test(View v) {
-        ImageButton button = (ImageButton) findViewById(v.getId());
-        String coordinate = "01";
-        if (coordinate.equals(v.getTag())) {
-            switch (number) {
-                case 0:
-                    button.setImageResource(R.drawable.checkerpiece_white);
-                    button.getBackground().setAlpha(0);
-                    number++;
-                    break;
-                case 1:
-                    button.setImageResource(R.drawable.checkerpiece_white_king);
-                    button.getBackground().setAlpha(0);
-                    number++;
-                    break;
-                case 2:
-                    button.setImageResource(R.drawable.blank);
-                    button.getBackground().setAlpha(255);
-                    number++;
-                    break;
-                case 3:
-                    button.setImageResource(R.drawable.checkerpiece_white);
-                    button.getBackground().setAlpha(0);
-                    number = 1;
-                    break;
-            }
-        }
+    public void returnHome(View v) {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
     }
 }

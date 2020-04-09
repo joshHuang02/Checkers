@@ -1,6 +1,9 @@
 package com.josh.checkers;
 
+import android.os.Build;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,7 +29,7 @@ public class CheckerBoard {
             this.errMsg = "Only BLACK pieces can be moved on BLACK Turn and only WHITE pieces can be moved on WHITE Turn";
             return false;
         }
-        ArrayList<String> allPossibleMoves = allPossibleMoves();
+        ArrayList<String> allPossibleMoves = possibleMoves();
         // makes the coordinates into string for matching
         String moveCoordinates = Integer.toString(x0) + Integer.toString(y0) + Integer.toString(xf) + Integer.toString(yf);
         // if move is a step (move by one square) and is a possible move
@@ -49,9 +52,10 @@ public class CheckerBoard {
             // else if final coordinates are out of bounds
         } else {
 //            System.out.println("Illegal move, type 'help' for all possible moves");
-            this.errMsg = "Illegal move, type 'help' for all possible moves";
+            this.errMsg = "Illegal move, turn on 'Help' to see all possible moves";
             return false;
         }
+        this.errMsg = null;
         // implements rule that jumps must be chained if another jump is possible
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
@@ -60,11 +64,20 @@ public class CheckerBoard {
                 }
             }
         }
+
+        // when a piece reach the other side of the board, make it a king
+        for (int i = 0; i < 8; i++) {
+            if ("WHITE".equals(board[0][i]))
+                board[0][i] = "WKING";
+            if ("BLACK".equals(board[7][i]))
+                board[7][i] = "BKING";
+        }
+
         return true; // returning true will switch turns
     }
 
     // finds all possible moves of every one of your piece based on turn
-    public ArrayList<String> allPossibleMoves() {
+    public ArrayList<String> possibleMoves() {
         // possibleMoves stores all possible moves as String coordinates (includes
         // initial and final coordinates)
         ArrayList<String> possibleMoves = new ArrayList<>();
@@ -74,8 +87,7 @@ public class CheckerBoard {
                 ArrayList<String> availableJumps = availableJumps(i, j);
                 if (board[i][j] != null && availableJumps.size() != 0) {
                     for (String coordinate : availableJumps) {
-//                        possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordiate);
-                        possibleMoves.add(coordinate);
+                        possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordinate);
                     }
                 }
             }
@@ -87,16 +99,21 @@ public class CheckerBoard {
                     ArrayList<String> availableMoves = availableSteps(i, j);
                     if (board[i][j] != null && availableMoves.size() != 0) {
                         for (String coordinate : availableMoves) {
-//                            possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordiate);
-                            possibleMoves.add(coordinate);
+                            possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordinate);
                         }
                     }
                 }
             }
         }
-        // reverses the order of the help array to make it more readable for black side
-        if (blackTurn)
-            Collections.reverse(possibleMoves);
+        return possibleMoves;
+    }
+
+    public ArrayList<String> possibleFinalCoordinates() {
+        ArrayList<String> possibleMoves = possibleMoves();
+//        possibleMoves.replaceAll( s -> s.substring(2));
+        for (int i = 0; i < possibleMoves.size(); i ++) {
+            possibleMoves.set(i, possibleMoves.get(i).substring(2));
+        }
         return possibleMoves;
     }
 

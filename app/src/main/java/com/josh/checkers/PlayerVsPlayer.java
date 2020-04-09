@@ -65,7 +65,7 @@ public class PlayerVsPlayer extends AppCompatActivity {
                 case "help":
 //                    System.out.print("You have these possible move(s): ");
 //                    System.out.println(Arrays.toString(checkers.allPossibleMoves().toArray()));\
-                    String possibleMovesMsg = getString(R.string.possibleMoves, checkerBoard.allPossibleMoves().toString());
+                    String possibleMovesMsg = getString(R.string.possibleMoves, checkerBoard.possibleMoves().toString());
                     notificationTextView.setText(possibleMovesMsg);
                     break;
                 // default is when you give a coordinate
@@ -100,7 +100,6 @@ public class PlayerVsPlayer extends AppCompatActivity {
 //                System.out.print("WHITE Turn: ");
                 coordinates.setHint("WHITE Turn");
             }
-            Log.d("boolean", checkerBoard.getBlackTurn() + "");
             printVisual();
         }
         // when a side runs out of pieces, the other side wins, also ends the program
