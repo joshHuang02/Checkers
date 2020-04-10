@@ -1,14 +1,12 @@
 package com.josh.checkers;
 
-import android.os.Build;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
-
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class CheckerBoard {
+    // error message in case there is one, wasn't feeling getters and setters so its public
+    public String errMsg = "";
     // board elements
     private String[][] board = new String[8][8];
     // count of pieces remaining on the board for each side
@@ -18,10 +16,9 @@ public class CheckerBoard {
     private boolean blackTurn = true;
     // the entire board in one string to be printed
     private String boardVisual = "";
-    // error message in case there is one, wasn't feeling getters and setters so its public
-    public String errMsg = "";
 
     public boolean movePiece(int x0, int y0, int xf, int yf) {
+
         // checks if the initial square is correct color based on what turn it is
         if (!(("BLACK".equals(board[x0][y0]) && blackTurn) || ("BKING".equals(board[x0][y0]) && blackTurn)
                 || ("WHITE".equals(board[x0][y0]) && !blackTurn) || ("WKING".equals(board[x0][y0]) && !blackTurn))) {
@@ -29,13 +26,17 @@ public class CheckerBoard {
             this.errMsg = "Only BLACK pieces can be moved on BLACK Turn and only WHITE pieces can be moved on WHITE Turn";
             return false;
         }
+
         ArrayList<String> allPossibleMoves = possibleMoves();
         // makes the coordinates into string for matching
-        String moveCoordinates = Integer.toString(x0) + Integer.toString(y0) + Integer.toString(xf) + Integer.toString(yf);
+        String moveCoordinates = Integer.toString(x0) + y0 + xf + yf;
+
         // if move is a step (move by one square) and is a possible move
         if (Math.abs(xf - x0) <= 1 && Math.abs(yf - y0) <= 1 && allPossibleMoves.contains(moveCoordinates)) {
             board[xf][yf] = board[x0][y0];
             board[x0][y0] = null;
+            // check if any pieces should be kings when move is legal
+            checkForKings();
             return true;
             // else if move is a jump (over opponent piece) and is a possible move
         } else if (allPossibleMoves.contains(moveCoordinates)) {
@@ -48,6 +49,8 @@ public class CheckerBoard {
             } else {
                 blackPieceCount--;
             }
+            // check if any pieces should be kings when move is legal
+            checkForKings();
 
             // else if final coordinates are out of bounds
         } else {
@@ -55,16 +58,24 @@ public class CheckerBoard {
             this.errMsg = "Illegal move, turn on 'Help' to see all possible moves";
             return false;
         }
+
+        // at this point move was definitely legal and there is no error
         this.errMsg = null;
+
         // implements rule that jumps must be chained if another jump is possible
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
+                // if there is another available jump
                 if (board[i][j] != null && availableJumps(i, j).size() != 0) {
                     return false; // returning false will NOT switch turns
                 }
             }
         }
 
+        return true; // returning true will switch turns
+    }
+
+    private void checkForKings() {
         // when a piece reach the other side of the board, make it a king
         for (int i = 0; i < 8; i++) {
             if ("WHITE".equals(board[0][i]))
@@ -72,8 +83,6 @@ public class CheckerBoard {
             if ("BLACK".equals(board[7][i]))
                 board[7][i] = "BKING";
         }
-
-        return true; // returning true will switch turns
     }
 
     // finds all possible moves of every one of your piece based on turn
@@ -87,7 +96,7 @@ public class CheckerBoard {
                 ArrayList<String> availableJumps = availableJumps(i, j);
                 if (board[i][j] != null && availableJumps.size() != 0) {
                     for (String coordinate : availableJumps) {
-                        possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordinate);
+                        possibleMoves.add(Integer.toString(i) + j + coordinate);
                     }
                 }
             }
@@ -99,7 +108,7 @@ public class CheckerBoard {
                     ArrayList<String> availableMoves = availableSteps(i, j);
                     if (board[i][j] != null && availableMoves.size() != 0) {
                         for (String coordinate : availableMoves) {
-                            possibleMoves.add(Integer.toString(i) + Integer.toString(j) + coordinate);
+                            possibleMoves.add(Integer.toString(i) + j + coordinate);
                         }
                     }
                 }
@@ -111,7 +120,7 @@ public class CheckerBoard {
     public ArrayList<String> possibleFinalCoordinates() {
         ArrayList<String> possibleMoves = possibleMoves();
 //        possibleMoves.replaceAll( s -> s.substring(2));
-        for (int i = 0; i < possibleMoves.size(); i ++) {
+        for (int i = 0; i < possibleMoves.size(); i++) {
             possibleMoves.set(i, possibleMoves.get(i).substring(2));
         }
         return possibleMoves;
@@ -124,29 +133,29 @@ public class CheckerBoard {
         if (blackTurn && ("BLACK".equals(board[x0][y0]) || "BKING".equals(board[x0][y0]))) {
             // checks the left side move
             if (x0 < 7 && y0 > 0 && board[x0 + 1][y0 - 1] == null)
-                availableMoves.add(Integer.toString(x0 + 1) + Integer.toString(y0 - 1));
+                availableMoves.add(Integer.toString(x0 + 1) + (y0 - 1));
             // check right side move
             if (x0 < 7 && y0 < 7 && board[x0 + 1][y0 + 1] == null)
-                availableMoves.add(Integer.toString(x0 + 1) + Integer.toString(y0 + 1));
+                availableMoves.add(Integer.toString(x0 + 1) + (y0 + 1));
             // if piece if a king then check backwards moves
             if ("BKING".equals(board[x0][y0])) {
                 // check left side
                 if (x0 > 0 && y0 > 0 && board[x0 - 1][y0 - 1] == null)
-                    availableMoves.add(Integer.toString(x0 - 1) + Integer.toString(y0 - 1));
+                    availableMoves.add(Integer.toString(x0 - 1) + (y0 - 1));
                 // check right side
                 if (x0 > 0 && y0 < 7 && board[x0 - 1][y0 + 1] == null)
-                    availableMoves.add(Integer.toString(x0 - 1) + Integer.toString(y0 + 1));
+                    availableMoves.add(Integer.toString(x0 - 1) + (y0 + 1));
             }
         } else if (!blackTurn && ("WHITE".equals(board[x0][y0]) || "WKING".equals(board[x0][y0]))) {
             if (x0 > 0 && y0 > 0 && board[x0 - 1][y0 - 1] == null)
-                availableMoves.add(Integer.toString(x0 - 1) + Integer.toString(y0 - 1));
+                availableMoves.add(Integer.toString(x0 - 1) + (y0 - 1));
             if (x0 > 0 && y0 < 7 && board[x0 - 1][y0 + 1] == null)
-                availableMoves.add(Integer.toString(x0 - 1) + Integer.toString(y0 + 1));
+                availableMoves.add(Integer.toString(x0 - 1) + (y0 + 1));
             if ("WKING".equals(board[x0][y0])) {
                 if (x0 < 7 && y0 > 0 && board[x0 + 1][y0 - 1] == null)
-                    availableMoves.add(Integer.toString(x0 + 1) + Integer.toString(y0 - 1));
+                    availableMoves.add(Integer.toString(x0 + 1) + (y0 - 1));
                 if (x0 < 7 && y0 < 7 && board[x0 + 1][y0 + 1] == null)
-                    availableMoves.add(Integer.toString(x0 + 1) + Integer.toString(y0 + 1));
+                    availableMoves.add(Integer.toString(x0 + 1) + (y0 + 1));
             }
         }
         return availableMoves;
@@ -159,37 +168,37 @@ public class CheckerBoard {
             if ("BLACK".equals(board[x0][y0]) || "BKING".equals(board[x0][y0])) {
                 if (x0 < 6 && y0 > 1 && ("WHITE".equals(board[x0 + 1][y0 - 1]) || "WKING".equals(board[x0 + 1][y0 - 1]))
                         && board[x0 + 2][y0 - 2] == null)
-                    availableJumps.add(Integer.toString(x0 + 2) + Integer.toString(y0 - 2));
+                    availableJumps.add(Integer.toString(x0 + 2) + (y0 - 2));
 
                 if (x0 < 6 && y0 < 6 && ("WHITE".equals(board[x0 + 1][y0 + 1]) || "WKING".equals(board[x0 + 1][y0 + 1]))
                         && board[x0 + 2][y0 + 2] == null)
-                    availableJumps.add(Integer.toString(x0 + 2) + Integer.toString(y0 + 2));
+                    availableJumps.add(Integer.toString(x0 + 2) + (y0 + 2));
             }
             if ("BKING".equals(board[x0][y0])) {
                 if (x0 > 1 && y0 > 1 && ("WHITE".equals(board[x0 - 1][y0 - 1]) || "WKING".equals(board[x0 - 1][y0 - 1]))
                         && board[x0 - 2][y0 - 2] == null)
-                    availableJumps.add(Integer.toString(x0 - 2) + Integer.toString(y0 - 2));
+                    availableJumps.add(Integer.toString(x0 - 2) + (y0 - 2));
 
                 if (x0 > 1 && y0 < 6 && ("WHITE".equals(board[x0 - 1][y0 + 1]) || "WKING".equals(board[x0 - 1][y0 + 1]))
                         && board[x0 - 2][y0 + 2] == null)
-                    availableJumps.add(Integer.toString(x0 - 2) + Integer.toString(y0 + 2));
+                    availableJumps.add(Integer.toString(x0 - 2) + (y0 + 2));
             }
         } else {
             if ("WHITE".equals(board[x0][y0]) || "WKING".equals(board[x0][y0])) {
                 if (x0 > 1 && y0 > 1 && ("BLACK".equals(board[x0 - 1][y0 - 1]) || "BKING".equals(board[x0 - 1][y0 - 1]))
                         && board[x0 - 2][y0 - 2] == null)
-                    availableJumps.add(Integer.toString(x0 - 2) + Integer.toString(y0 - 2));
+                    availableJumps.add(Integer.toString(x0 - 2) + (y0 - 2));
                 if (x0 > 1 && y0 < 6 && ("BLACK".equals(board[x0 - 1][y0 + 1]) || "BKING".equals(board[x0 - 1][y0 + 1]))
                         && board[x0 - 2][y0 + 2] == null)
-                    availableJumps.add(Integer.toString(x0 - 2) + Integer.toString(y0 + 2));
+                    availableJumps.add(Integer.toString(x0 - 2) + (y0 + 2));
             }
             if ("WKING".equals(board[x0][y0])) {
                 if (x0 < 6 && y0 > 1 && ("BLACK".equals(board[x0 + 1][y0 - 1]) || "BKING".equals(board[x0 + 1][y0 - 1]))
                         && board[x0 + 2][y0 - 2] == null)
-                    availableJumps.add(Integer.toString(x0 + 2) + Integer.toString(y0 - 2));
+                    availableJumps.add(Integer.toString(x0 + 2) + (y0 - 2));
                 if (x0 < 6 && y0 < 6 && ("BLACK".equals(board[x0 + 1][y0 + 1]) || "BKING".equals(board[x0 + 1][y0 + 1]))
                         && board[x0 + 2][y0 + 2] == null)
-                    availableJumps.add(Integer.toString(x0 + 2) + Integer.toString(y0 + 2));
+                    availableJumps.add(Integer.toString(x0 + 2) + (y0 + 2));
             }
         }
         return availableJumps;
@@ -265,11 +274,11 @@ public class CheckerBoard {
         return this.blackTurn;
     }
 
-    public String[][] getBoard() {
-        return this.board;
-    }
-
     public void setBlackTurn(boolean blackTurn) {
         this.blackTurn = blackTurn;
+    }
+
+    public String[][] getBoard() {
+        return this.board;
     }
 }
