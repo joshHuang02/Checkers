@@ -1,7 +1,5 @@
 package com.josh.checkers;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -10,13 +8,15 @@ import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import java.util.*;
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
 
 public class PlayerVsBot extends AppCompatActivity {
+    CheckerBoard checkerBoard = new CheckerBoard();
     private int number = 0;
     private boolean wantHelp = false;
     private String initialCoordinates = null;
-    CheckerBoard checkerBoard = new CheckerBoard();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +50,7 @@ public class PlayerVsBot extends AppCompatActivity {
         // ex moveOwnPiece if you click on a white piece on black turn
         boolean moveOwnPiece;
         boolean squareIsNull;
+
         if (checkerBoard.getBoard()[tag.charAt(0) - '0'][tag.charAt(1) - '0'] != null) {
             moveOwnPiece = ('B' == checkerBoard.getBoard()[tag.charAt(0) - '0'][tag.charAt(1) - '0'].charAt(0) && checkerBoard.getBlackTurn())
                     || ('W' == checkerBoard.getBoard()[tag.charAt(0) - '0'][tag.charAt(1) - '0'].charAt(0) && !checkerBoard.getBlackTurn());
@@ -59,12 +60,16 @@ public class PlayerVsBot extends AppCompatActivity {
             squareIsNull = true;
         }
 
-        if (initialCoordinates == null) {
+        if (initialCoordinates == null) { // when click on actual piece for first time
             // for some reason putting this if statement as an "&&" in the above statement breaks the app
             if (moveOwnPiece) initialCoordinates = tag;
-        } else if (moveOwnPiece) {
-            initialCoordinates = tag;
-        } else if (squareIsNull){ // at this stage piece definitely moves
+        } else if (moveOwnPiece) { // when click on own piece again, switches initial coordinate
+            if (tag.equals(initialCoordinates)) {
+                initialCoordinates = null;
+            } else {
+                initialCoordinates = tag;
+            }
+        } else if (squareIsNull) { // at this stage piece definitely moves b/c there is initial coordinate
             String coordinates = initialCoordinates + tag;
             if (checkerBoard.movePiece(coordinates.charAt(0) - '0', coordinates.charAt(1) - '0', coordinates.charAt(2) - '0', coordinates.charAt(3) - '0')) {
                 checkerBoard.setBlackTurn(!checkerBoard.getBlackTurn());
@@ -82,7 +87,7 @@ public class PlayerVsBot extends AppCompatActivity {
         // win message
         if (checkerBoard.getBlackPiecesCount() == 0) {
             notificationTextView.setText(getString(R.string.winMsg, "WHITE"));
-        } else if (checkerBoard.getWhitePieceCount() == 0){
+        } else if (checkerBoard.getWhitePieceCount() == 0) {
             notificationTextView.setText(getString(R.string.winMsg, "BLACK"));
         } else {
             // set error or help text on the screen
@@ -95,13 +100,17 @@ public class PlayerVsBot extends AppCompatActivity {
     public void printBoard() {
         TextView blackPiecesTextView = (TextView) findViewById(R.id.blackPiecesTextView);
         TextView whitePiecesTextView = (TextView) findViewById(R.id.whitePiecesTextView);
+        String[][] board = checkerBoard.getBoard();
+        ImageButton[] allPieces = getAllPieces();
+        ArrayList<String> allPossibleFinalCoordinates = checkerBoard.allPossibleFinalCoordinates();
+        ArrayList<String> allPossibleMoves = checkerBoard.allPossibleMoves();
+        ArrayList<String> piecePossibleFinalCoordinates = new ArrayList<>();
+        if (initialCoordinates != null)
+            piecePossibleFinalCoordinates = checkerBoard.piecePossibleMoves(initialCoordinates.charAt(0) - '0', initialCoordinates.charAt(1) - '0');
 
         blackPiecesTextView.setText(getString(R.string.blackPieceCount, checkerBoard.getBlackPiecesCount()));
         whitePiecesTextView.setText(getString(R.string.whitePieceCount, checkerBoard.getWhitePieceCount()));
 
-        String[][] board = checkerBoard.getBoard();
-        ImageButton[] allPieces = getAllPieces();
-        ArrayList<String> possibleFinalCoordinates = checkerBoard.possibleFinalCoordinates();
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 for (ImageButton btn : allPieces) {
@@ -133,10 +142,17 @@ public class PlayerVsBot extends AppCompatActivity {
                         }
 
                         if (wantHelp) {
-                            if (possibleFinalCoordinates.contains(coordinate)) {
-                                btn.setImageResource(R.drawable.possible_move);
-                                btn.getBackground().setAlpha(255);
+                            // mark all possible moves
+                            if (allPossibleFinalCoordinates.contains(coordinate)) {
+                                btn.setImageResource(R.drawable.green_box);
+                                btn.getBackground().setAlpha(0);
+                                // mark possible moves for the move selected
+                                if (allPossibleMoves.contains(initialCoordinates + coordinate) && piecePossibleFinalCoordinates.contains(coordinate)) {
+                                    btn.setImageResource(R.drawable.green_square);
+                                    btn.getBackground().setAlpha(0);
+                                }
                             }
+
                         }
                     }
                 }

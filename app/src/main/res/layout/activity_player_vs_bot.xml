@@ -50,6 +50,8 @@
         android:layout_width="110dp"
         android:layout_height="wrap_content"
         android:text="Black Turn "
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintBottom_toTopOf="@+id/imageView2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
