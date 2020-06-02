@@ -11,12 +11,18 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class PlayerVsBot extends AppCompatActivity {
-    CheckerBoard checkerBoard = new CheckerBoard();
+    CheckerBoard gameBoard = new CheckerBoard();
+
     private int number = 0;
     private boolean wantHelp = false;
+    private boolean somePieceMoved = false;
     private String initialCoordinates = null;
+    private View currentBtnView;
+
+    private int stackCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,22 +33,22 @@ public class PlayerVsBot extends AppCompatActivity {
         Switch help = (Switch) findViewById(R.id.helpSwitch);
 
         // makes new board and display it
-        checkerBoard.newBoard();
-        printBoard();
+        gameBoard.newBoard();
+        printBoard(gameBoard);
 
         // help switch
         help.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 wantHelp = isChecked;
-                printBoard();
+                printBoard(gameBoard);
             }
         });
     }
 
-    public void move(View v) {
+    public void move(CheckerBoard checkerBoard) {
         TextView notificationTextView = (TextView) findViewById(R.id.notificationTextView);
         TextView turnTextView = (TextView) findViewById(R.id.turnTextView);
-        ImageButton piece = (ImageButton) findViewById(v.getId());
+        ImageButton piece = (ImageButton) findViewById(currentBtnView.getId());
 
         String tag = piece.getTag().toString();
 
@@ -71,8 +77,12 @@ public class PlayerVsBot extends AppCompatActivity {
             }
         } else if (squareIsNull) { // at this stage piece definitely moves b/c there is initial coordinate
             String coordinates = initialCoordinates + tag;
+            // if a piece actually moved
             if (checkerBoard.movePiece(coordinates.charAt(0) - '0', coordinates.charAt(1) - '0', coordinates.charAt(2) - '0', coordinates.charAt(3) - '0')) {
                 checkerBoard.setBlackTurn(!checkerBoard.getBlackTurn());
+                somePieceMoved = true;
+            } else {
+                somePieceMoved = false;
             }
             initialCoordinates = null;
         }
@@ -80,6 +90,12 @@ public class PlayerVsBot extends AppCompatActivity {
         // tells player whose turn it is
         if (checkerBoard.getBlackTurn()) {
             turnTextView.setText("Black Turn");
+            // This is when the bot starts calculating its next move
+            // when turn is black and a piece has moved, avoids user clicking random squares and restarting bot process
+            if (somePieceMoved) {
+                printBoard(gameBoard);
+                findBestMove(gameBoard);
+            }
         } else {
             turnTextView.setText("White Turn");
         }
@@ -94,22 +110,74 @@ public class PlayerVsBot extends AppCompatActivity {
             notificationTextView.setText(checkerBoard.errMsg);
         }
 
-        printBoard();
+        printBoard(gameBoard);
     }
 
-    public void printBoard() {
+    /* Recursive function to find the best move by predicting every move possible for the rest of the game
+     * if no single best move is found, will return a random move
+     */
+    public String[] findBestMove(CheckerBoard startingBoard) {
+        ArrayList<String> possibleBlackMoves = startingBoard.allPossibleMoves();
+        String randomBlackMove = possibleBlackMoves.get((int) (Math.random() * possibleBlackMoves.size()) );
+        String[] result = {"not found", randomBlackMove};
+        System.out.println(startingBoard.getBlackTurn());
+
+        for (String blackMove : possibleBlackMoves) {
+            CheckerBoard predictBlackMoves = startingBoard;
+            predictBlackMoves.movePiece(Integer.parseInt(String.valueOf(blackMove.charAt(0))), Integer.parseInt(String.valueOf(blackMove.charAt(1))),
+                    Integer.parseInt(String.valueOf(blackMove.charAt(2))), Integer.parseInt(String.valueOf(blackMove.charAt(3))));
+
+            stackCount = 0;
+            ArrayList<String> possibleWhiteMoves = predictBlackMoves.allPossibleMoves();
+            for (int j = 1; j <= possibleWhiteMoves.size(); j++) {
+                CheckerBoard predictWhiteMoves = predictBlackMoves;
+
+                predictWhiteMoves.movePiece(Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(0))), Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(1))),
+                        Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(2))), Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(3))));
+
+                if (predictWhiteMoves.getBlackPiecesCount() == 0) {
+                    result[0] = "found";
+                    result[1] = blackMove;
+                    System.out.println(blackMove + " " + randomBlackMove);
+                    return result;
+//                } else if (j == possibleWhiteMoves.size()) {
+////                    return result;
+                } else {
+                    stackCount++;
+//                    System.out.println(stackCount);
+                    try
+                    {
+                        Thread.sleep(1000);
+                        printBoard(startingBoard);
+                    }
+                    catch(InterruptedException ex)
+                    {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    String[] addStack = findBestMove(predictWhiteMoves);
+                    if (addStack[0].equals("found")) return addStack;
+                }
+            } // end white prediction loop
+        } // end black prediction loop
+
+        System.out.println("not found: "+result[1]);
+        return result;
+    }
+
+    public void printBoard(CheckerBoard printedBoard) {
         TextView blackPiecesTextView = (TextView) findViewById(R.id.blackPiecesTextView);
         TextView whitePiecesTextView = (TextView) findViewById(R.id.whitePiecesTextView);
-        String[][] board = checkerBoard.getBoard();
+        String[][] board = printedBoard.getBoard();
         ImageButton[] allPieces = getAllPieces();
-        ArrayList<String> allPossibleFinalCoordinates = checkerBoard.allPossibleFinalCoordinates();
-        ArrayList<String> allPossibleMoves = checkerBoard.allPossibleMoves();
+        ArrayList<String> allPossibleFinalCoordinates = printedBoard.allPossibleFinalCoordinates();
+        ArrayList<String> allPossibleMoves = printedBoard.allPossibleMoves();
         ArrayList<String> piecePossibleFinalCoordinates = new ArrayList<>();
-        if (initialCoordinates != null)
-            piecePossibleFinalCoordinates = checkerBoard.piecePossibleMoves(initialCoordinates.charAt(0) - '0', initialCoordinates.charAt(1) - '0');
+        if (initialCoordinates != null && wantHelp)
+            piecePossibleFinalCoordinates = printedBoard.piecePossibleMoves(initialCoordinates.charAt(0) - '0', initialCoordinates.charAt(1) - '0');
 
-        blackPiecesTextView.setText(getString(R.string.blackPieceCount, checkerBoard.getBlackPiecesCount()));
-        whitePiecesTextView.setText(getString(R.string.whitePieceCount, checkerBoard.getWhitePieceCount()));
+        blackPiecesTextView.setText(getString(R.string.blackPieceCount, printedBoard.getBlackPiecesCount()));
+        whitePiecesTextView.setText(getString(R.string.whitePieceCount, printedBoard.getWhitePieceCount()));
 
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
@@ -196,6 +264,12 @@ public class PlayerVsBot extends AppCompatActivity {
         allPieces[30] = (ImageButton) findViewById(R.id.piece30);
         allPieces[31] = (ImageButton) findViewById(R.id.piece31);
         return allPieces;
+    }
+
+    // allows a piece to be moved without user clicking on anything
+    public void moveBtn(View v) {
+        currentBtnView = v;
+        move(gameBoard);
     }
 
     public void returnHome(View v) {
