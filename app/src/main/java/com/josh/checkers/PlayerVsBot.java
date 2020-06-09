@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class PlayerVsBot extends AppCompatActivity {
-    CheckerBoard gameBoard = new CheckerBoard();
+    CheckerBoard gameBoard;
 
     private int number = 0;
     private boolean wantHelp = false;
@@ -33,6 +33,7 @@ public class PlayerVsBot extends AppCompatActivity {
         Switch help = (Switch) findViewById(R.id.helpSwitch);
 
         // makes new board and display it
+        gameBoard = new CheckerBoard();
         gameBoard.newBoard();
         printBoard(gameBoard);
 
@@ -43,6 +44,7 @@ public class PlayerVsBot extends AppCompatActivity {
                 printBoard(gameBoard);
             }
         });
+        findBestMove(gameBoard);
     }
 
     public void move(CheckerBoard checkerBoard) {
@@ -94,7 +96,7 @@ public class PlayerVsBot extends AppCompatActivity {
             // when turn is black and a piece has moved, avoids user clicking random squares and restarting bot process
             if (somePieceMoved) {
                 printBoard(gameBoard);
-                findBestMove(gameBoard);
+//                findBestMove(gameBoard);
             }
         } else {
             turnTextView.setText("White Turn");
@@ -123,17 +125,20 @@ public class PlayerVsBot extends AppCompatActivity {
         System.out.println(startingBoard.getBlackTurn());
 
         for (String blackMove : possibleBlackMoves) {
-            CheckerBoard predictBlackMoves = startingBoard;
-            predictBlackMoves.movePiece(Integer.parseInt(String.valueOf(blackMove.charAt(0))), Integer.parseInt(String.valueOf(blackMove.charAt(1))),
-                    Integer.parseInt(String.valueOf(blackMove.charAt(2))), Integer.parseInt(String.valueOf(blackMove.charAt(3))));
+            CheckerBoard predictBlackMoves = new CheckerBoard(startingBoard);
 
+            while (!predictBlackMoves.movePiece(Integer.parseInt(String.valueOf(blackMove.charAt(0))), Integer.parseInt(String.valueOf(blackMove.charAt(1))),
+                    Integer.parseInt(String.valueOf(blackMove.charAt(2))), Integer.parseInt(String.valueOf(blackMove.charAt(3))))){}
+
+            boolean isBlackTurn = predictBlackMoves.getBlackTurn();
             stackCount = 0;
             ArrayList<String> possibleWhiteMoves = predictBlackMoves.allPossibleMoves();
             for (int j = 1; j <= possibleWhiteMoves.size(); j++) {
-                CheckerBoard predictWhiteMoves = predictBlackMoves;
+                CheckerBoard predictWhiteMoves = new CheckerBoard(predictBlackMoves);
 
-                predictWhiteMoves.movePiece(Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(0))), Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(1))),
-                        Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(2))), Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(3))));
+                while (!predictWhiteMoves.movePiece(Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(0))), Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(1))),
+                        Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(2))), Integer.parseInt(String.valueOf(possibleWhiteMoves.get(j).charAt(3))))){}
+                isBlackTurn = predictWhiteMoves.getBlackTurn();
 
                 if (predictWhiteMoves.getBlackPiecesCount() == 0) {
                     result[0] = "found";
@@ -145,18 +150,21 @@ public class PlayerVsBot extends AppCompatActivity {
                 } else {
                     stackCount++;
 //                    System.out.println(stackCount);
-                    try
-                    {
-                        Thread.sleep(1000);
-                        printBoard(startingBoard);
-                    }
-                    catch(InterruptedException ex)
-                    {
-                        Thread.currentThread().interrupt();
-                    }
+//                    try
+//                    {
+//                        Thread.sleep(1000);
+//                        printBoard(startingBoard);
+//                    }
+//                    catch(InterruptedException ex)
+//                    {
+//                        Thread.currentThread().interrupt();
+//                    }
 
                     String[] addStack = findBestMove(predictWhiteMoves);
-                    if (addStack[0].equals("found")) return addStack;
+                    if (addStack[0].equals("found")) {
+                        System.out.println("Found");
+                        return addStack;
+                    }
                 }
             } // end white prediction loop
         } // end black prediction loop

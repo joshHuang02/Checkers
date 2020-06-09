@@ -6,17 +6,37 @@ import java.util.ArrayList;
 
 public class CheckerBoard {
     // error message in case there is one, wasn't feeling getters and setters so its public
-    public String errMsg = "";
+    public String errMsg;
     // board elements
-    private String[][] board = new String[8][8];
+    private String[][] board;
     // count of pieces remaining on the board for each side
-    private int blackPieceCount = 12;
-    private int whitePieceCount = 12;
+    private int blackPieceCount;
+    private int whitePieceCount;
     // this keeps track of turns to determine possible moves
-    private boolean blackTurn = true;
+    private boolean blackTurn;
     // the entire board in one string to be printed
-    private String boardVisual = "";
+    private String boardVisual;
 
+    // Default constructor for new board
+    public CheckerBoard() {
+        this.errMsg = "";
+        this.board = new String[8][8];
+        this.blackPieceCount = 12;
+        this.whitePieceCount = 12;
+        this.blackTurn = true;
+        this.boardVisual = "";
+    }
+    // Copy constructor to make a copy of a board for bot automation
+    public CheckerBoard(CheckerBoard boardToCopy) {
+        this.errMsg = "";
+        this.board = boardToCopy.board;
+        this.blackPieceCount = boardToCopy.blackPieceCount;
+        this.whitePieceCount = boardToCopy.whitePieceCount;
+        this.blackTurn = boardToCopy.blackTurn;
+        this.boardVisual = "";
+    }
+
+    // returns false if the piece must move again, returns true otherwise
     public boolean movePiece(int x0, int y0, int xf, int yf) {
 
         // checks if the initial square is correct color based on what turn it is
